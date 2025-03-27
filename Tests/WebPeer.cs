@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace _WRTC_
 {
-    public class WrtcPeer : MonoBehaviour, IShell
+    public class WebPeer : MonoBehaviour, IShell
     {
         public enum Commands : byte
         {
@@ -59,7 +59,7 @@ namespace _WRTC_
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void OnAfterSceneLoad()
         {
-            Util.InstantiateOrCreateIfAbsent<WrtcPeer>();
+            Util.InstantiateOrCreateIfAbsent<WebPeer>();
         }
 
         //----------------------------------------------------------------------------------------------------------
