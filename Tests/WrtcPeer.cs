@@ -23,11 +23,35 @@ namespace _WRTC_
             Text,
         }
 
-        WebSocket websocket;
+        const ushort PORT_ARMA = 40000;
+        const string EVE_DOMAIN = "shitstorm.ovh";
+
+        static readonly string URL_ARMA = "https://shitstorm.ovh:" + PORT_ARMA;
+        static readonly string URL_LOCALHOST = "ws://localhost:" + PORT_ARMA;
 
         IEnumerable<string> IShell.ECommands => Enum.GetNames(typeof(Commands));
 
         BinaryWriter NewWriter() => new(new MemoryStream(), Encoding.UTF8);
+
+        WebSocket websocket;
+
+        //----------------------------------------------------------------------------------------------------------
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Assets/" + nameof(_WRTC_) + "/" + nameof(_PythonBytes))]
+        static void _PythonBytes()
+        {
+            StringBuilder sb = new();
+
+            sb.AppendLine($"class {nameof(Bytes)}(Enum):");
+            foreach (Bytes code in Enum.GetValues(typeof(Bytes)))
+                sb.AppendLine($"\t{code} = {(int)code}");
+
+            string log = sb.TroncatedForLog();
+            Debug.Log(log);
+            GUIUtility.systemCopyBuffer = log;
+        }
+#endif
 
         //----------------------------------------------------------------------------------------------------------
 
@@ -50,7 +74,7 @@ namespace _WRTC_
 
         void Init()
         {
-            websocket = new WebSocket("ws://localhost:3000");
+            websocket = new WebSocket(URL_LOCALHOST);
 
             websocket.OnOpen += () =>
             {
@@ -100,14 +124,14 @@ namespace _WRTC_
 
         void SendBytes(params byte[] bytes)
         {
-            if (websocket.State == WebSocketState.Open)
+            if (websocket.State == WebSocketState.Open || true)
             {
                 using BinaryWriter writer = NewWriter();
+
                 writer.Write((byte)Bytes.Bytes);
                 writer.Write(bytes);
-                Debug.Log($"Sending {writer.GetBuffer().Length} bytes instead of {writer.BaseStream.Position} bytes");
-                return;
-                websocket.Send(writer.GetBuffer());
+
+                websocket.Send(writer.CopyBytes());
             }
             else
                 Debug.LogWarning($"Websocket is not open ({websocket.State})");
@@ -115,14 +139,14 @@ namespace _WRTC_
 
         void SendText(in string text)
         {
-            if (websocket.State == WebSocketState.Open)
+            if (websocket.State == WebSocketState.Open || true)
             {
                 using BinaryWriter writer = NewWriter();
+
                 writer.Write((byte)Bytes.Text);
                 writer.WriteText(text);
-                Debug.Log($"Sending {writer.GetBuffer().Length} bytes instead of {writer.BaseStream.Position} bytes");
-                return;
-                websocket.Send(writer.GetBuffer());
+
+                websocket.Send(writer.CopyBytes());
             }
             else
                 Debug.LogWarning($"Websocket is not open ({websocket.State})");
