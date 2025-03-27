@@ -1,4 +1,5 @@
-﻿using _TERMINAL_;
+﻿using _ARK_;
+using _TERMINAL_;
 using NativeWebSocket;
 using System;
 using System.Collections.Generic;
@@ -91,18 +92,38 @@ namespace _WRTC_
                 Debug.Log($"Connection closed! ({nameof(code)}: {code})");
             };
 
-            websocket.OnMessage += (bytes) =>
-            {
-                // getting the message as a string
-                string message = Encoding.UTF8.GetString(bytes);
-                Debug.Log("OnMessage! " + message);
-            };
+            websocket.OnMessage += OnReceiveBytes;
 
             // waiting for messages
             websocket.Connect();
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+            NUCLEOR.delegates.onNetworkPull += websocket.DispatchMessageQueue;
+#endif
         }
 
         //----------------------------------------------------------------------------------------------------------
+
+        void OnReceiveBytes(byte[] bytes)
+        {
+            Debug.Log("OnReceiveBytes! " + bytes.Length);
+            using BinaryReader reader = new(new MemoryStream(bytes), Encoding.UTF8);
+
+            Bytes code = (Bytes)reader.ReadByte();
+            switch (code)
+            {
+                case Bytes.Text:
+                    {
+                        string message = reader.ReadText();
+                        Debug.Log("OnMessage! " + message);
+                    }
+                    break;
+
+                default:
+                    Debug.LogError($"Unknown code: \"{code}\"");
+                    break;
+            }
+        }
 
         void CmdSendBytes(in LineParser line)
         {
@@ -187,7 +208,11 @@ namespace _WRTC_
         private void OnDestroy()
         {
             Shell.RemoveUser(this);
-            websocket?.Close();
+            if (websocket != null)
+            {
+                NUCLEOR.delegates.onNetworkPull -= websocket.DispatchMessageQueue;
+                websocket.Close();
+            }
         }
     }
 }
