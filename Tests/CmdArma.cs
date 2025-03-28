@@ -32,7 +32,7 @@ namespace _WRTC_
                 {
                     case Commands.CreateLobby:
                         if (line.IsExec)
-                            NUCLEOR.instance.scheduler.AddRoutine(Util_arma.EArmaComm(Util_arma.Commands.CreateLobby));
+                            NUCLEOR.instance.scheduler.AddRoutine(ARMA.EArmaComm(ARMA.Commands.CreateLobby));
                         break;
 
                     default:

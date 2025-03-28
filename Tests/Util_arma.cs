@@ -7,7 +7,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
-public static class Util_arma
+public static partial class ARMA
 {
     public const ushort
         PORT_ARMA = 40000;
@@ -18,6 +18,7 @@ public static class Util_arma
 
     enum Codes : byte
     {
+        WrongVersion,
         CreateLobby,
     }
 
@@ -62,7 +63,9 @@ public static class Util_arma
 
             using BinaryWriter writer = Util.NewWriter();
 
+            writer.Write(version.VERSION);
             writer.Write((byte)operation);
+
             switch (operation)
             {
                 case Commands.CreateLobby:
@@ -97,17 +100,22 @@ public static class Util_arma
 
             using BinaryReader reader = buffer.NewReader();
 
-            switch (operation)
+            Codes resp = (Codes)reader.ReadByte();
+            switch (resp)
             {
-                case Commands.CreateLobby:
+                case Codes.WrongVersion:
+                    Debug.LogWarning($"[ARMA_ERROR] {resp}");
+                    break;
+
+                case Codes.CreateLobby:
                     {
                         string message = reader.ReadText();
-                        Debug.Log($"[LOBBY_RESPONSE] {operation}: \"{message}\"");
+                        Debug.Log($"[ARMA_RESPONSE] {resp}: \"{message}\"");
                     }
                     break;
 
                 default:
-                    Debug.LogError($"Unknown code: \"{operation}\"");
+                    Debug.LogError($"Unknown code: \"{resp}\"");
                     break;
             }
         };
