@@ -20,12 +20,19 @@ public static partial class ARMA
     {
         WrongVersion,
         CreateLobby,
+        ListLobbies,
+        JoinLobby,
+        Ping,
     }
 
     public enum Commands : byte
     {
         CreateLobby = Codes.CreateLobby,
+        ListLobbies = Codes.ListLobbies,
+        JoinLobby = Codes.JoinLobby,
     }
+
+    public static string[] public_lobbies; 
 
     //----------------------------------------------------------------------------------------------------------
 
@@ -52,14 +59,13 @@ public static partial class ARMA
         bool stop = false;
 
         string url = URL_LOCALHOST;
-        Debug.Log($"[ARMA] Connecting to \"{url}\"...");
+        Debug.Log($"[ARMA] Connecting to \"{url}\"...".ToSubLog());
 
         WebSocket websocket = new(url);
 
         websocket.OnOpen += () =>
         {
-            stop = true;
-            Debug.Log($"[ARMA_OPEN] Connection open! ({websocket})");
+            Debug.Log($"[ARMA] Connected to \"{url}\"".ToSubLog());
 
             using BinaryWriter writer = Util.NewWriter();
 
@@ -69,12 +75,8 @@ public static partial class ARMA
             switch (operation)
             {
                 case Commands.CreateLobby:
-                    writer.WriteText("Hello, ARMA!");
-                    break;
-
-                default:
-                    stop = true;
-                    Debug.LogWarning($"Unknown code: \"{operation}\"");
+                    writer.WriteText(settings.lobby_name);
+                    writer.Write(settings.LobbyHash);
                     break;
             }
 
@@ -84,38 +86,74 @@ public static partial class ARMA
         websocket.OnError += (message) =>
         {
             stop = true;
-            Debug.LogWarning($"[ARMA_ERROR] {message}");
+            Debug.LogWarning($"[ARMA] {{ {message} }}");
         };
 
         websocket.OnClose += (code) =>
         {
             stop = true;
-            Debug.Log($"[ARMA_CLOSE] Connection closed! ({nameof(code)}: {code})");
+            if (code == WebSocketCloseCode.Normal)
+                Debug.Log($"[ARMA] Disconnected from \"{url}\"".ToSubLog());
+            else
+                Debug.LogWarning($"[ARMA] Closed ({nameof(code)}: {code})");
         };
 
         websocket.OnMessage += buffer =>
         {
             stop = true;
-            Debug.Log($"[ARMA_RESPONSE] OnReceiveBytes! {buffer.Length}");
-
             using BinaryReader reader = buffer.NewReader();
 
             Codes resp = (Codes)reader.ReadByte();
             switch (resp)
             {
                 case Codes.WrongVersion:
-                    Debug.LogWarning($"[ARMA_ERROR] {resp}");
+                    Debug.LogWarning($"[ARMA] {resp}");
                     break;
 
                 case Codes.CreateLobby:
                     {
-                        string message = reader.ReadText();
-                        Debug.Log($"[ARMA_RESPONSE] {resp}: \"{message}\"");
+                        bool success = reader.ReadBoolean();
+                        if (success)
+                        {
+                            stop = false;
+                            Debug.Log($"[ARMA] {resp}: {success}");
+                        }
+                        else
+                            Debug.LogWarning($"[ARMA] {resp}: {success}");
+                    }
+                    break;
+
+                case Codes.ListLobbies:
+                    {
+                        StringBuilder sb = new();
+
+                        ushort count = reader.ReadUInt16();
+                        public_lobbies = new string[count];
+
+                        sb.AppendLine($"[ARMA] {resp}: {count}");
+
+                        for (ushort i = 0; i < count; ++i)
+                        {
+                            string lobby_name = reader.ReadText();
+                            public_lobbies[i] = lobby_name;
+                            sb.AppendLine($" . {lobby_name}");
+                        }
+
+                        sb.LogAndClear();
+                    }
+                    break;
+
+                case Codes.Ping:
+                    {
+                        using BinaryWriter writer = Util.NewWriter();
+                        writer.Write(version.VERSION);
+                        writer.Write(operation == Commands.CreateLobby && !stop);
+                        websocket.Send(writer.CopyBuffer());
                     }
                     break;
 
                 default:
-                    Debug.LogError($"Unknown code: \"{resp}\"");
+                    Debug.LogError($"[ARMA] Unknown code: \"{resp}\"");
                     break;
             }
         };
@@ -131,6 +169,7 @@ public static partial class ARMA
         {
             onDispose = () =>
             {
+                Debug.Log($"[ARMA] Disposed connection \"{url}\" ({nameof(stop)}: {stop})".ToSubLog());
                 websocket.Close();
                 NUCLEOR.delegates.onNetworkPull -= websocket.DispatchMessageQueue;
             },

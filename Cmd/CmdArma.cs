@@ -11,6 +11,8 @@ namespace _WRTC_
         enum Commands : byte
         {
             CreateLobby,
+            ListLobbies,
+            JoinLobby,
         }
 
         IEnumerable<string> IShell.ECommands => Enum.GetNames(typeof(Commands));
@@ -31,8 +33,12 @@ namespace _WRTC_
                 switch (cmd)
                 {
                     case Commands.CreateLobby:
+                        WrtcPeer.CmdCreateLobby(line);
+                        break;
+
+                    case Commands.ListLobbies:
                         if (line.IsExec)
-                            NUCLEOR.instance.scheduler.AddRoutine(ARMA.EArmaComm(ARMA.Commands.CreateLobby));
+                            NUCLEOR.instance.subScheduler.AddRoutine(ARMA.EArmaComm(ARMA.Commands.ListLobbies));
                         break;
 
                     default:

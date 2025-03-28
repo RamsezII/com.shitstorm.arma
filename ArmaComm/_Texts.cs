@@ -25,6 +25,11 @@ partial class ARMA
         public static readonly string file_name = typeof(Settings).TypeToFileName() + json;
         public static string FileDir => NUCLEOR.home_path.ForceDir().FullName;
         public static string FilePath => Path.Combine(FileDir, file_name);
+
+        public string lobby_name = "lobby_default";
+        public string lobby_pass;
+
+        public int LobbyHash => string.IsNullOrWhiteSpace(lobby_pass) ? 0 : lobby_pass.GetHashCode(StringComparison.Ordinal);
     }
 
     public static Version version;
@@ -36,6 +41,7 @@ partial class ARMA
     [UnityEditor.MenuItem("Assets/" + nameof(_WRTC_) + "/" + nameof(IncrementVersion))]
     public static void IncrementVersion()
     {
+        version ??= new();
         ++version.VERSION;
         Debug.Log($"{nameof(IncrementVersion)}: {version.VERSION}");
         version.Save(Version.file_editor, true);
@@ -44,46 +50,42 @@ partial class ARMA
     [UnityEditor.MenuItem("Assets/" + nameof(_WRTC_) + "/" + nameof(DecrementVersion))]
     static void DecrementVersion()
     {
+        version ??= new();
         --version.VERSION;
         version.Save(Version.file_editor, true);
         Debug.Log($"{nameof(DecrementVersion)}: {version.VERSION}");
     }
 #endif
 
+    //----------------------------------------------------------------------------------------------------------
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void OnBeforeSceneLoad()
     {
-        version ??= new();
-
         TextAsset text = Resources.Load<TextAsset>(Version.version_file[..^".txt".Length]);
         version = JsonUtility.FromJson<Version>(text.text);
         version.OnRead();
 
         Debug.Log($"[ARMA_VERSION]: {version.VERSION}");
 
-        LoadSettings_logged();
-
-#if UNITY_EDITOR
-        return;
-#endif
+        LoadSettings(true);
     }
 
-#if UNITY_EDITOR
-    [UnityEditor.MenuItem("Assets/" + nameof(_WRTC_) + "/" + nameof(LoadSettings))]
-#endif
-    static void LoadSettings_logged() => LoadSettings(true);
-    public static void LoadSettingsNoLog() => LoadSettings(false);
+    //----------------------------------------------------------------------------------------------------------
+
     public static void LoadSettings(in bool log)
     {
         settings ??= new();
         JSon.Read(ref settings, Settings.FilePath, true, log);
+
+        if (string.IsNullOrWhiteSpace(settings.lobby_name))
+        {
+            Debug.LogWarning($"[ARMA] {nameof(Settings.lobby_name)} is null or empty, setting to default");
+            settings.lobby_name = "lobby_default";
+            SaveSettings(log);
+        }
     }
 
-#if UNITY_EDITOR
-    [UnityEditor.MenuItem("Assets/" + nameof(_WRTC_) + "/" + nameof(SaveSettings))]
-#endif
-    static void SaveSettings_logged() => SaveSettings(true);
-    public static void SaveSettingsNoLog() => SaveSettings(false);
     public static void SaveSettings(in bool log)
     {
         settings ??= new();
