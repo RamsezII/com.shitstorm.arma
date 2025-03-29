@@ -42,7 +42,13 @@ namespace _WRTC_
                 ARMA.SaveSettings(true);
             }
 
-            hosting_lobby = NUCLEOR.instance.subScheduler.AddRoutine(ARMA.EArmaComm(ARMA.Commands.CreateLobby));
+            hosting_lobby = NUCLEOR.instance.subScheduler.AddRoutine(ARMA.EArmaComm(
+                ARMA.Commands.CreateLobby,
+                onOpenWriter: (_, writer) =>
+                {
+                    writer.WriteText(ARMA.settings.lobby_name);
+                    writer.Write(ARMA.settings.LobbyHash);
+                }));
         }
     }
 }

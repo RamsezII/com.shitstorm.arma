@@ -1,12 +1,11 @@
-﻿using _ARK_;
-using _TERMINAL_;
+﻿using _TERMINAL_;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace _WRTC_
 {
-    internal class CmdArma : IShell
+    internal partial class CmdArma : IShell
     {
         enum Commands : byte
         {
@@ -38,7 +37,7 @@ namespace _WRTC_
 
                     case Commands.ListLobbies:
                         if (line.IsExec)
-                            NUCLEOR.instance.subScheduler.AddRoutine(ARMA.EArmaComm(ARMA.Commands.ListLobbies));
+                            ARMA.RefreshAndLogLobbies();
                         break;
 
                     default:
