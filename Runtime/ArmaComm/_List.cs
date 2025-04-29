@@ -32,7 +32,7 @@ namespace _WRTC_
             sb.AppendLine($"[ARMA] Public lobbies: {public_lobbies._list.Count}");
             for (int i = 0; i < public_lobbies._list.Count; ++i)
                 sb.AppendLine($" . {public_lobbies._list[i]}");
-            sb.LogAndClear();
+            sb.Log();
         }
 
         static void InitList()
