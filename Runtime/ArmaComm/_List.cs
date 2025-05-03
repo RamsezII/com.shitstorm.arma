@@ -38,7 +38,7 @@ namespace _WRTC_
         static void InitList()
         {
             lobbies_list_users.ClearList();
-            lobbies_list_users.AddListener1(toggle =>
+            lobbies_list_users.AddListener1(null, toggle =>
             {
                 if (operation_refresh_lobbies != null)
                 {
