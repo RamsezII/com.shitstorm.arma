@@ -25,6 +25,14 @@ namespace _WRTC_
 
         //----------------------------------------------------------------------------------------------------------
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void OnAfterSceneLoad()
+        {
+            InitCmd_host();
+        }
+
+        //----------------------------------------------------------------------------------------------------------
+
         protected virtual void Awake()
         {
             instance = this;
@@ -34,8 +42,31 @@ namespace _WRTC_
 
         protected virtual void Start()
         {
-
         }
+
+        //----------------------------------------------------------------------------------------------------------
+
+        //void IShell.OnCmdLine(in string arg0, in LineParser line)
+        //{
+        //    if (Enum.TryParse(arg0, true, out Commands cmd))
+        //        switch (cmd)
+        //        {
+        //            case Commands.CreateLobby:
+        //                WrtcPeer.CmdCreateLobby(line);
+        //                break;
+
+        //            case Commands.ListLobbies:
+        //                if (line.IsExec)
+        //                    ARMA.RefreshAndLogLobbies();
+        //                break;
+
+        //            default:
+        //                Debug.LogWarning($"Unimplemented command: \"{arg0}\"");
+        //                break;
+        //        }
+        //    else
+        //        Debug.LogWarning($"Unknown command: \"{arg0}\"");
+        //}
 
         //----------------------------------------------------------------------------------------------------------
 
