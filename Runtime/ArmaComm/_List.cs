@@ -18,7 +18,7 @@ namespace _WRTC_
         public static void RefreshAndLogLobbies()
         {
             object logLobbies = new();
-            public_lobbies.AddOneTimeListener(_ =>
+            public_lobbies.AddOneTimeListener(null, _ =>
             {
                 LogPublicLobbies();
                 lobbies_list_users.RemoveElement(logLobbies);
